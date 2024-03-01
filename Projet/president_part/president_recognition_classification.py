@@ -32,7 +32,7 @@ def load_pres(fname):
         alltxts.append(txt)
     return alltxts,alllabs
 
-fname = "./datasets/AFDpresidentutf8/corpus.tache1.learn.utf8"
+fname = "../datasets/AFDpresidentutf8/corpus.tache1.learn.utf8"
 alltxts,alllabs = load_pres(fname)
 
 #---------------------------------------------------------------------
@@ -169,6 +169,7 @@ y_pred_test = log_reg_classifier.predict(X_test)
 #On cherche la meilleure valeur de sigma pour le gaussian smoothing
 
 sigma_values = [round(x, 1) for x in np.arange(0.1, 1.1, 0.1)]
+sigma_values.append([2,4,5,8,10,20,30])
 best_sigma = None
 best_f1_score = 0.0
 
@@ -198,7 +199,8 @@ smoothed_pred_train_labels = convert_to_labels(smoothed_pred_train)
 smoothed_pred_test_labels = convert_to_labels(smoothed_pred_test)
 
 #---------------------------------------------------------------------
-
+print('Before smoothing:')
+print(log_reg_classifier.predict_proba(X_train))
 print(smoothed_pred_train)
 print(smoothed_pred_train_labels)
 
