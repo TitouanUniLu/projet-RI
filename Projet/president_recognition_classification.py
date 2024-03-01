@@ -1,18 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     text_representation:
-#       extension: .py
-#       format_name: light
-#       format_version: '1.5'
-#       jupytext_version: 1.16.1
-#   kernelspec:
-#     display_name: Python 3
-#     language: python
-#     name: python3
-# ---
-
-# +
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -20,6 +5,13 @@ import codecs
 import re
 import time
 import joblib
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import GridSearchCV
+from imblearn.over_sampling import RandomOverSampler, SMOTE
+from scipy.ndimage import gaussian_filter
 
 # Chargement des données:
 def load_pres(fname):
@@ -40,57 +32,47 @@ def load_pres(fname):
         alltxts.append(txt)
     return alltxts,alllabs
 
-
-# +
 fname = "./datasets/AFDpresidentutf8/corpus.tache1.learn.utf8"
 alltxts,alllabs = load_pres(fname)
 
+#---------------------------------------------------------------------
+
+print('OVERVIEW DATASET POUR PRESIDENTS \n')
 print(f'{len(alltxts)} phrases')
-print('Chirac == label 1 et Mitterand == label -1')
+print('Chirac == label 1 et Mitterand == label -1 \n')
 print(f'{alltxts[0]} -> classe: {alllabs[0]}')
 print(f'{alltxts[11]} -> classe: {alllabs[11]}')
 print(f'Chirac: {np.sum(np.array(alllabs) == 1)} phrases - Mitterand: {np.sum(np.array(alllabs) == -1)} phrases')
-print(f'on remarque que Chirac a parlé {np.round(49890/7523)} fois plus que Mitterand')
+print(f'on remarque que Chirac a parlé {np.round(49890/7523)} fois plus que Mitterand\n')
 
-# +
-from scipy.ndimage import gaussian_filter
 
+#fonction d'utilite
 def gaussian_pred_smoothing(model, X, sigma):
         # Définition du noyau de filtre gaussien
         pred =  model.predict_proba(X)
         smoothed_pred = gaussian_filter(pred, sigma)
         return smoothed_pred
 
-
-# +
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score
-from sklearn.model_selection import GridSearchCV
+#---------------------------------------------------------------------
 
 tfidf = TfidfVectorizer(use_idf=True, norm='l2', smooth_idf=True, lowercase=False)
 X = tfidf.fit_transform(alltxts)
 
 X_train, X_test, y_train, y_test = train_test_split(X, alllabs, test_size=0.20, random_state=12)
 
-# +
-from imblearn.over_sampling import RandomOverSampler, SMOTE
-
-oversampler = RandomOverSampler(sampling_strategy='minority', random_state=0)
+oversampler = SMOTE(sampling_strategy='minority', random_state=0, k_neighbors=5) #je mets ici arbitraiement grace aux tests
 X_train_resampled, y_train_resampled = oversampler.fit_resample(X_train, y_train)
 
-# +
+#---------------------------------------------------------------------
+
 num_cores = os.cpu_count()
 
 print("Number of CPU cores available:", num_cores)
-
-cores = 5
-
-# +
-from imblearn.pipeline import make_pipeline, Pipeline
+cores = 5 #hard coded temporairement pour l'entrainement
 
 #---------------------------------------------------------------------
+
+from imblearn.pipeline import make_pipeline, Pipeline
 
 first_classif_v1 = make_pipeline(
         oversampler,
